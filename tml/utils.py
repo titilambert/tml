@@ -18,7 +18,7 @@ def int32(x):
             return -2147483648
     return x
 
-def save_ord(char):
+def safe_ord(char):
     num = ord(char)
     if num > 0x7F:
         num = 0x100 - num
@@ -29,7 +29,7 @@ def save_ord(char):
     return num
 
 def safe_chr(i):
-    return chr(i if i >= 0 else 256 + i)
+    return chr(max(0, min(i if i >= 0 else 256 + i, 256)))
 
 def string_to_ints(in_string, length=8):
     ints = []
@@ -40,7 +40,7 @@ def string_to_ints(in_string, length=8):
                 string += in_string[j]
             else:
                 string += chr(0)
-        ints.append(int32(((save_ord(string[0])+128)<<24)|((save_ord(string[1])+128)<<16)|((save_ord(string[2])+128)<<8)|(save_ord(string[3])+128)))
+        ints.append(int32(((safe_ord(string[0])+128)<<24)|((safe_ord(string[1])+128)<<16)|((safe_ord(string[2])+128)<<8)|(safe_ord(string[3])+128)))
     ints[-1] &= int32(0xffffff00)
     return ints
 
