@@ -81,6 +81,7 @@ class DataFileReader(object):
             if item is not None:
                 item_size, item_data = item
                 fmt = '{0}i'.format(item_size/4)
+                item_data = unpack(fmt, item_data)
                 version, author, map_version, credits, license, \
                 settings = item_data[:items.Info.type_size]
                 if author > -1:
@@ -90,7 +91,7 @@ class DataFileReader(object):
                 if credits > -1:
                     credits = decompress(self.get_compressed_data(f, credits))[:-1]
                 if license > -1:
-                    license = decompress(self.get_compressed_data(f, licsense))[:-1]
+                    license = decompress(self.get_compressed_data(f, license))[:-1]
                 if settings > -1:
                     settings = decompress(self.get_compressed_data(f, settings)).split('\x00')[:-1]
                 self.info = items.Info(author=author, map_version=map_version,
