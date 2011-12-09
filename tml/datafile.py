@@ -86,14 +86,24 @@ class DataFileReader(object):
                 settings = item_data[:items.Info.type_size]
                 if author > -1:
                     author = decompress(self.get_compressed_data(f, author))[:-1]
+                else:
+                    author = None
                 if map_version > -1:
                     map_version = decompress(self.get_compressed_data(f, map_version))[:-1]
+                else:
+                    map_version = None
                 if credits > -1:
                     credits = decompress(self.get_compressed_data(f, credits))[:-1]
+                else:
+                    credits = None
                 if license > -1:
                     license = decompress(self.get_compressed_data(f, license))[:-1]
+                else:
+                    license = None
                 if settings > -1:
                     settings = decompress(self.get_compressed_data(f, settings)).split('\x00')[:-1]
+                else:
+                    settings = None
                 self.info = items.Info(author=author, map_version=map_version,
                                        credits=credits, license=license,
                                        settings=settings)
@@ -250,12 +260,14 @@ class DataFileReader(object):
                 fmt = '{0}i'.format(item_size/4)
                 item_data = unpack(fmt, item_data)
                 version, channels, start_point, \
-                num_point = item_data[:type_size-8]
-                name = ints_to_string(item_data[type_size-8:type_size])
+                num_point = item_data[:type_size-9]
+                name = ints_to_string(item_data[type_size-9:type_size-1])
                 envpoints = self.envpoints[start_point:start_point+num_point]
+                synced = True if version < 2 or item_data[type_size-1] else False
                 envelope = items.Envelope(name=name, version=version,
                                           channels=channels,
-                                          envpoints=envpoints)
+                                          envpoints=envpoints,
+                                          synced=synced)
                 self.envelopes.append(envelope)
 
     def get_item_type(self, item_type):
@@ -433,14 +445,20 @@ class DataFileWriter(object):
                    group.parallax_y, start_layer, len(group.layers),
                    group.use_clipping, group.clip_x, group.clip_y, group.clip_w,
                    group.clip_h, *name)))
+
         # save envelopes
         start_point = 0
         for i, envelope in enumerate(teemap.envelopes):
             num_points = len(envelope.envpoints)
             name = string_to_ints(envelope.name)
+            synced = 1 if envelope.synced else 0
+            fmt = '{0}i'.format(items.Envelope.type_size)
             items_.append(DataFileWriter.DataFileItem(ITEM_ENVELOPE, i,
-                   pack('12i', 1, envelope.channels, start_point, num_points, *name)))
+                   pack(fmt, 1, envelope.channels, start_point, num_points,
+                   name[0], name[1], name[2], name[3], name[4], name[5], name[6], name[7],
+                   synced)))
             start_point += num_points
+
         # save points
         envpoints = []
         for envpoint in teemap.envpoints:

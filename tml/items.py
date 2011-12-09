@@ -113,13 +113,14 @@ class Envelope(object):
 
     """
 
-    type_size = 12
+    type_size = 13
 
-    def __init__(self, name=None, version=None, channels=None, envpoints=None):
+    def __init__(self, name=None, version=None, channels=None, envpoints=None, synced=True):
         self.name = name
         self.version = version
         self.channels = channels
         self.envpoints = envpoints
+        self.synced = synced
 
     def __repr__(self):
         return '<Envelope ({0})>'.format(self.name or len(self.envpoints))
