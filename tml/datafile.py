@@ -1,4 +1,11 @@
 # -*- coding: utf-8 -*-
+"""
+    Handles map loading and map saving.
+
+    :copyright: 2010-2012 by the TML Team, see AUTHORS for more details.
+    :license: GNU GPL, see LICENSE for more details.
+"""
+
 from struct import pack, unpack
 from zlib import compress, decompress
 

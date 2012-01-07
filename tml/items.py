@@ -5,7 +5,7 @@
     You can generate new items and just put them in the appropriate place in
     a map, they will be recognized automatically when you save your map.
 
-    :copyright: 2010-2011 by the TML Team, see AUTHORS for more details.
+    :copyright: 2010-2012 by the TML Team, see AUTHORS for more details.
     :license: GNU GPL, see LICENSE for more details.
 """
 
