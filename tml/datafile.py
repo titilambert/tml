@@ -393,6 +393,7 @@ class DataFileWriter(object):
                     tele_tile_data = -1
                     speedup_tile_data = -1
                     tiles_str = ''
+                    name = string_to_ints(layer.name or 'Tiles', 3)
                     if layer.is_telelayer:
                         tile_data = len(datas)
                         datas.append(DataFileWriter.DataFileData(len(layer.tele_tiles.tiles)*'\x00\x00\x00\x00'))
@@ -400,6 +401,7 @@ class DataFileWriter(object):
                             tiles_str += tile
                         tele_tile_data = len(datas)
                         datas.append(DataFileWriter.DataFileData(tiles_str))
+                        name = string_to_ints('Tele', 3)
                     elif layer.is_speeduplayer:
                         tile_data = len(datas)
                         datas.append(DataFileWriter.DataFileData(len(layer.speedup_tiles.tiles)*'\x00\x00\x00\x00'))
@@ -407,12 +409,14 @@ class DataFileWriter(object):
                             tiles_str += tile
                         speedup_tile_data = len(datas)
                         datas.append(DataFileWriter.DataFileData(tiles_str))
+                        name = string_to_ints('Speedup', 3)
                     else:
                         for tile in layer.tiles.tiles:
                             tiles_str += tile
                         tile_data = len(datas)
                         datas.append(DataFileWriter.DataFileData(tiles_str))
-                    name = string_to_ints(layer.name, 3)
+                        if layer.is_gamelayer:
+                            name = string_to_ints('Game', 3)
                     if teemap.telelayer or teemap.speeduplayer:
                         items_.append(DataFileWriter.DataFileItem(ITEM_LAYER, layer_count,
                                pack('20i', 0, LAYERTYPE_TILES, layer.detail, 3, layer.width,
@@ -439,7 +443,7 @@ class DataFileWriter(object):
                                pack('10i', 7, LAYERTYPE_QUADS, layer.detail, 2,
                                len(layer.quads.quads), quad_data, layer.image_id, *name)))
                         layer_count += 1
-            name = string_to_ints(group.name, 3)
+            name = string_to_ints('Game' if group.is_gamegroup else group.name, 3)
             items_.append(DataFileWriter.DataFileItem(ITEM_GROUP, i,
                    pack('15i', 3, group.offset_x, group.offset_y, group.parallax_x,
                    group.parallax_y, start_layer, len(group.layers),

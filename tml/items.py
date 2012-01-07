@@ -176,6 +176,13 @@ class Group(object):
         """
         self.layers.append(layer)
 
+    @property
+    def is_gamegroup(self):
+        for layer in self.layers:
+            if layer.is_gamelayer:
+                return True
+        return False
+
     def __repr__(self):
         return '<Group ({0})>'.format(len(self.layers))
 
