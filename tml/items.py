@@ -565,7 +565,10 @@ class TileManager(object):
         elif data is not None:
             self.tiles = data
         else:
-            self.tiles = ['\x00\x00\x00\x00'] * size
+            if _type == 1:
+                self.tiles = ['\x00\x00'] * size
+            else:
+                self.tiles = ['\x00\x00\x00\x00'] * size
 
     def __getitem__(self, value):
         if isinstance(value, slice):
@@ -588,6 +591,10 @@ class TileManager(object):
         return len(self.tiles)
 
     def _tile_to_string(self, tile):
+        if self.type == 1:
+            return pack('2B', tile.number, tile.type)
+        elif self.type == 2:
+            return pack('Bh', tile.force, tile.angle)
         return pack('4B', tile.index, tile._flags, tile.skip, tile.reserved)
 
     def _string_to_tile(self, string):
