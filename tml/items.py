@@ -34,15 +34,13 @@ class Info(object):
 
     """
 
-    type_size = 6
+    type_size = 5
 
-    def __init__(self, author=None, map_version=None, credits=None, license=None,
-                 settings=None):
+    def __init__(self, author=None, map_version=None, credits=None, license=None):
         self.author = author
         self.map_version = map_version
         self.credits = credits
         self.license = license
-        self.settings = settings
 
     def __repr__(self):
         return '<MapInfo ({0})>'.format(self.author or 'None')
