@@ -89,8 +89,8 @@ class DataFileReader(object):
                 item_size, item_data = item
                 fmt = '{0}i'.format(item_size/4)
                 item_data = unpack(fmt, item_data)
-                version, author, map_version, credits, license, \
-                settings = item_data[:items.Info.type_size]
+                version, author, map_version, credits, \
+                license = item_data[:items.Info.type_size]
                 if author > -1:
                     author = decompress(self.get_compressed_data(f, author))[:-1]
                 else:
@@ -107,13 +107,8 @@ class DataFileReader(object):
                     license = decompress(self.get_compressed_data(f, license))[:-1]
                 else:
                     license = None
-                if settings > -1:
-                    settings = decompress(self.get_compressed_data(f, settings)).split('\x00')[:-1]
-                else:
-                    settings = None
                 self.info = items.Info(author=author, map_version=map_version,
-                                       credits=credits, license=license,
-                                       settings=settings)
+                                       credits=credits, license=license)
             else:
                 self.info = None
 
@@ -370,12 +365,6 @@ class DataFileWriter(object):
                     num[i] = len(datas)
                     item_data += '\x00' # 0 termination
                     datas.append(DataFileWriter.DataFileData(item_data))
-            if teemap.info.settings:
-                num[4] = len(datas)
-                settings_str = ''
-                for setting in teemap.info.settings:
-                    settings_str += '{0}\x00'.format(setting)
-                datas.append(DataFileWriter.DataFileData(settings_str))
             items_.append(DataFileWriter.DataFileItem(ITEM_INFO, 0,
                               pack('6i', 1, *num)))
         # save images
