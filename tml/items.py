@@ -5,7 +5,7 @@
     You can generate new items and just put them in the appropriate place in
     a map, they will be recognized automatically when you save your map.
 
-    :copyright: 2010-2011 by the TML Team, see AUTHORS for more details.
+    :copyright: 2010-2012 by the TML Team, see AUTHORS for more details.
     :license: GNU GPL, see LICENSE for more details.
 """
 
@@ -113,13 +113,14 @@ class Envelope(object):
 
     """
 
-    type_size = 12
+    type_size = 13
 
-    def __init__(self, name=None, version=None, channels=None, envpoints=None):
+    def __init__(self, name=None, version=None, channels=None, envpoints=None, synced=True):
         self.name = name
         self.version = version
         self.channels = channels
         self.envpoints = envpoints
+        self.synced = synced
 
     def __repr__(self):
         return '<Envelope ({0})>'.format(self.name or len(self.envpoints))
@@ -174,6 +175,13 @@ class Group(object):
 
         """
         self.layers.append(layer)
+
+    @property
+    def is_gamegroup(self):
+        for layer in self.layers:
+            if layer.is_gamelayer:
+                return True
+        return False
 
     def __repr__(self):
         return '<Group ({0})>'.format(len(self.layers))
@@ -557,7 +565,10 @@ class TileManager(object):
         elif data is not None:
             self.tiles = data
         else:
-            self.tiles = ['\x00\x00\x00\x00'] * size
+            if _type == 1:
+                self.tiles = ['\x00\x00'] * size
+            else:
+                self.tiles = ['\x00\x00\x00\x00'] * size
 
     def __getitem__(self, value):
         if isinstance(value, slice):
@@ -580,6 +591,10 @@ class TileManager(object):
         return len(self.tiles)
 
     def _tile_to_string(self, tile):
+        if self.type == 1:
+            return pack('2B', tile.number, tile.type)
+        elif self.type == 2:
+            return pack('Bh', tile.force, tile.angle)
         return pack('4B', tile.index, tile._flags, tile.skip, tile.reserved)
 
     def _string_to_tile(self, string):

@@ -1,13 +1,13 @@
 """
     tml
 
-    :copyright: 2010-2011 by the TML Team, see AUTHORS for more details.
+    :copyright: 2010-2012 by the TML Team, see AUTHORS for more details.
     :license: GNU GPL, see LICENSE for more details.
 """
 __version_info__ = {
 	'major': 0,
 	'minor': 2,
-	'micro': 1,
+	'micro': 3,
 	'releaselevel': 'final',
 	'serial': 1
 }

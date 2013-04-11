@@ -5,7 +5,7 @@
     modify and write teeworlds map files easily without using the original
     teeworlds client, allowing to built teewor on top of it
 
-    :copyright: 2010-2011 by the TML Team, see AUTHORS for more details.
+    :copyright: 2010-2012 by the TML Team, see AUTHORS for more details.
     :license: GNU GPL, see LICENSE for more details.
 """
 from constants import *

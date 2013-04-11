@@ -3,7 +3,7 @@
 """
     A library which makes it possible to read teeworlds map files.
 
-    :copyright: 2010-2011 by the TML Team, see AUTHORS for more details.
+    :copyright: 2010-2012 by the TML Team, see AUTHORS for more details.
     :license: GNU GPL, see LICENSE for more details.
 """
 
