@@ -163,13 +163,23 @@ class DataFileReader(object):
                         name = None
                         if version >= 3:
                             name = ints_to_string(item_data[type_size-3:type_size]) or None
+
                         tile_list = []
-                        tile_data = decompress(self.get_compressed_data(f, data))
+                        if game == 8: # Hack for front layer
+                          if version >= 3:
+                            tile_data = item_data[items.TileLayer.type_size+2]
+                          else:
+                            tile_data = item_data[items.TileLayer.type_size-1]
+                          tile_data = decompress(self.get_compressed_data(f, tile_data))
+                        else:
+                          tile_data = decompress(self.get_compressed_data(f, data))
                         for i in xrange(0, len(tile_data), 4):
-                            tile_list.append(tile_data[i:i+4])
+                          tile_list.append(tile_data[i:i+4])
+
                         tiles = items.TileManager(data=tile_list)
                         tele_tiles = None
                         speedup_tiles = None
+
                         if game == 2:
                             tele_list = []
                             if version >= 3:
