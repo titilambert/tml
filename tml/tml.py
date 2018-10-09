@@ -51,22 +51,10 @@ class Teemap(object):
 
     @property
     def gamelayer(self):
-        """Returns the gamelayer.
-
-        If you have multiple gamelayers (**don't** do that!), it will return
-        the first one
-
-        """
-        i = 0
+        """Returns the gamelayer."""
         for layer in self.layers:
             if layer.is_gamelayer:
-                gamelayer = layer
-                i += 1
-        if i < 1:
-            raise MapError('There is no gamelayer')
-        elif i > 1:
-            raise MapError('There is more than one gamelayer')
-        return gamelayer
+                return layer
 
     @property
     def telelayer(self):
@@ -80,6 +68,27 @@ class Teemap(object):
         """Returns the speeduplayer. Only for race modification."""
         for layer in self.layers:
             if layer.is_speeduplayer:
+                return layer
+
+    @property
+    def frontlayer(self):
+        """Returns the frontlayer. Only for DDrace modification."""
+        for layer in self.layers:
+            if layer.is_frontlayer:
+                return layer
+
+    @property
+    def switchlayer(self):
+        """Returns the switchlayer. Only for DDrace modification."""
+        for layer in self.layers:
+            if layer.is_switchlayer:
+                return layer
+
+    @property
+    def tunelayer(self):
+        """Returns the tunelayer. Only for DDrace modification."""
+        for layer in self.layers:
+            if layer.is_tunelayer:
                 return layer
 
     @property

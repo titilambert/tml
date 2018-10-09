@@ -203,6 +203,15 @@ class Layer(object):
 
     def __init__(self, detail):
         self.detail = detail
+        self.type = None
+
+    @property
+    def is_tilelayer(self):
+        return self.type == 'tilelayer'
+
+    @property
+    def is_quadlayer(self):
+        return self.type == 'quadlayer'
 
     @property
     def is_gamelayer(self):
@@ -214,6 +223,18 @@ class Layer(object):
 
     @property
     def is_speeduplayer(self):
+        return False
+
+    @property
+    def is_frontlayer(self):
+        return False
+
+    @property
+    def is_switchlayer(self):
+        return False
+
+    @property
+    def is_tunelayer(self):
         return False
 
 class TileLayer(Layer):
@@ -235,7 +256,8 @@ class TileLayer(Layer):
 
     def __init__(self, width=50, height=50, name='Tiles', detail=False, game=0,
                  color=(255, 255, 255, 255), color_env=-1, color_env_offset=0,
-                 image_id=-1, tiles=None, tele_tiles=None, speedup_tiles=None):
+                 image_id=-1, tiles=None, tele_tiles=None, speedup_tiles=None,
+                 switch_tiles=None, tune_tiles=None):
         super(TileLayer, self).__init__(detail)
         self.name = name
         self.color = color
@@ -248,10 +270,16 @@ class TileLayer(Layer):
         self.tiles = tiles or TileManager(width * height)
         self.tele_tiles = None
         self.speedup_tiles = None
-        if game == 2:
+        self.switch_tiles = None
+        self.tune_tiles = None
+        if self.is_telelayer:
             self.tele_tiles = tele_tiles or TileManager(width * height, _type=1)
-        if game == 4:
+        elif self.is_speeduplayer:
             self.speedup_tiles = speedup_tiles or TileManager(width * height, _type=2)
+        elif self.is_switchlayer:
+            self.switch_tiles = switch_tiles or TileManager(width * height, _type=3)
+        elif self.is_tunelayer:
+            self.tune_tiles = tune_tiles or TileManager(width * height, _type=3)
         self.type = 'tilelayer'
 
     def _check_bounds(self, x, y):
@@ -388,13 +416,44 @@ class TileLayer(Layer):
     def is_speeduplayer(self):
         return self.game == 4
 
+    @property
+    def is_frontlayer(self):
+        return self.game == 8
+
+    @property
+    def is_switchlayer(self):
+        return self.game == 16
+
+    @property
+    def is_tunelayer(self):
+        return self.game == 32
+
+    @property
+    def gametiles(self):
+        if self.is_gamelayer or self.is_frontlayer:
+            return self.tiles
+        elif self.is_telelayer:
+            return self.tele_tiles
+        elif self.is_speeduplayer:
+            return self.speedup_tiles
+        elif self.is_switchlayer:
+            return self.switch_tiles
+        elif self.is_tunelayer:
+            return self.tune_tiles
+
     def __repr__(self):
         if self.is_gamelayer:
             return '<Game layer ({0}x{1})>'.format(self.width, self.height)
-        elif self.is_telelayer and self.tele_tiles:
+        elif self.is_telelayer:
             return '<Tele layer ({0}x{1})>'.format(self.width, self.height)
-        elif self.is_speeduplayer and self.speedup_tiles:
+        elif self.is_speeduplayer:
             return '<Speedup layer ({0}x{1})>'.format(self.width, self.height)
+        elif self.is_frontlayer:
+            return '<Front layer ({0}x{1})>'.format(self.width, self.height)
+        elif self.is_switchlayer:
+            return '<Switch layer ({0}x{1})>'.format(self.width, self.height)
+        elif self.is_tunelayer:
+            return '<Tune layer ({0}x{1})>'.format(self.width, self.height)
         return '<Tilelayer ({0}x{1})>'.format(self.width, self.height)
 
 class QuadLayer(Layer):
@@ -420,6 +479,20 @@ class QuadLayer(Layer):
 
     def __repr__(self):
         return '<Quadlayer ({0})>'.format(len(self.quads))
+
+class SoundLayer(Layer):
+    """Represents a soundlayer."""
+
+    type_size = 10
+
+    def __init__(self, name='Sounds', detail=False, num_sources=0):
+        super(SoundLayer, self).__init__(detail)
+        self.name = name
+        self.num_sources = num_sources
+        self.type = 'soundlayer'
+
+    def __repr__(self):
+        return '<Soundlayer ({0})>'.format(self.num_sources)
 
 class QuadManager(object):
     """Handles quads while sparing memory.
@@ -577,6 +650,10 @@ class TileManager(object):
             return TeleTile(self.tiles[value])
         if self.type == 2:
             return SpeedupTile(self.tiles[value])
+        if self.type == 3:
+            return SwitchTile(self.tiles[value])
+        if self.type == 4:
+            return TuneTile(self.tiles[value])
         return self._string_to_tile(self.tiles[value])
 
     def __setitem__(self, k, v):
@@ -682,6 +759,7 @@ class TeleTile(object):
 
     def __init__(self, data):
         self.number, self.type = unpack('2B', data)
+        self.index = self.type
 
     def __repr__(self):
         return '<TeleTile ({0})>'.format(self.number)
@@ -690,7 +768,28 @@ class SpeedupTile(object):
     """Represents a speedup tile of a tilelayer. Only for race modification."""
 
     def __init__(self, data):
-        self.force, self.angle = unpack('Bh', data)
+        self.force, self.maxspeed, self.type, self.angle = unpack('BBBh', data)
+        self.index = self.type
 
     def __repr__(self):
         return '<SpeedupTile ({0})>'.format(self.index)
+
+class SwitchTile(object):
+    """Represents a switch tile of a tilelayer. Only for DDrace modification."""
+
+    def __init__(self, data):
+        self.number, self.type, self.flags, self.delay = unpack('4B', data)
+        self.index = self.type
+
+    def __repr__(self):
+        return '<SwitchTile ({0})>'.format(self.index)
+
+class TuneTile(object):
+    """Represents a tune tile of a tilelayer. Only for DDrace modification."""
+
+    def __init__(self, data):
+        self.number, self.type = unpack('2B', data)
+        self.index = self.type
+
+    def __repr__(self):
+        return '<TuneTile ({0})>'.format(self.index)
