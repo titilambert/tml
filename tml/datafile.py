@@ -143,23 +143,20 @@ class DataFileReader(object):
                 version, offset_x, offset_y, parallax_x, parallax_y, \
                 start_layer, num_layers, use_clipping, clip_x, clip_y, \
                 clip_w, clip_h = item_data[:items.Group.type_size-3]
-                if version != 3:
-                    raise ValueError('Old map format version')
-                data = item_data[items.Group.type_size-3:items.Group.type_size]
-                group_name = ints_to_string(data) or None
+                if version >= 3:
+                    data = item_data[items.Group.type_size-3:items.Group.type_size]
+                    group_name = ints_to_string(data) or None
+                else:
+                    group_name = None
                 start_layer, num_layers = item_data[5:7]
 
-                if group_name == "Game":
-                    if has_game_group:
-                        raise ValueError('Only one Game group allowed')
-                    has_game_group = True
-
-                    has_gamelayer = False
-                    has_telelayer = False
-                    has_speeduplayer = False
-                    has_frontlayer = False
-                    has_switchlayer = False
-                    has_tunelayer = False
+                is_game_group = False
+                has_gamelayer = False
+                has_telelayer = False
+                has_speeduplayer = False
+                has_frontlayer = False
+                has_switchlayer = False
+                has_tunelayer = False
 
                 # load layers in group
                 layer_item_start, layer_item_num = self.get_item_type(ITEM_LAYER)
@@ -180,7 +177,13 @@ class DataFileReader(object):
                         name = None
                         name = ints_to_string(item_data[type_size-3:type_size]) or None
 
-                        if game and group_name != "Game":
+                        if group_name == 'Game' or (game and not version >= 3):
+                            if not is_game_group and has_game_group:
+                                raise ValueError('Only one Game group allowed')
+                            has_game_group = True
+                            is_game_group = True
+
+                        if game and not is_game_group:
                             raise ValueError('Gamelayers only allowed in Game group')
 
                         tile_list = []
@@ -199,30 +202,60 @@ class DataFileReader(object):
 
                         if game == 2:
                             tele_list = []
-                            # num of tele data is right after the default type length
-                            if len(item_data) > type_size: # some security
-                                tele_data = item_data[type_size]
-                                if tele_data > -1 and tele_data < self.header.num_raw_data:
-                                    tele_data = decompress(self.get_compressed_data(f, tele_data))
-                                    for i in range(0, len(tele_data), 2):
-                                        tele_list.append(tele_data[i:i+2])
-                                    tele_tiles = items.TileManager(data=tele_list, _type=1)
+                            if version >= 3:
+                                # num of tele data is right after the default type length
+                                if len(item_data) > items.TileLayer.type_size: # some security
+                                    tele_data = item_data[items.TileLayer.type_size]
+                                    if tele_data > -1 and tele_data < self.header.num_raw_data:
+                                        tele_data = decompress(self.get_compressed_data(f, tele_data))
+                                        if len(tele_data) // 2 != width * height:
+                                            raise ValueError('Invalid tele data')
+                                        for i in range(0, len(tele_data), 2):
+                                            tele_list.append(tele_data[i:i+2])
+                                        tele_tiles = items.TileManager(data=tele_list, _type=1)
+                            else:
+                                # num of tele data is right after num of data for old maps
+                                if len(item_data) > items.TileLayer.type_size-3: # some security
+                                    tele_data = item_data[items.TileLayer.type_size-3]
+                                    if tele_data > -1 and tele_data < self.header.num_raw_data:
+                                        tele_data = decompress(self.get_compressed_data(f, tele_data))
+                                        if len(tele_data) // 2 != width * height:
+                                            raise ValueError('Invalid tele data')
+                                        for i in range(0, len(tele_data), 2):
+                                            tele_list.append(tele_data[i:i+2])
+                                        tele_tiles = items.TileManager(data=tele_list, _type=1)
                         elif game == 4:
                             speedup_list = []
-                            # num of speedup data is right after tele data
-                            if len(item_data) > type_size+1: # some security
-                                speedup_data = item_data[type_size+1]
-                                if speedup_data > -1 and speedup_data < self.header.num_raw_data:
-                                    speedup_data = decompress(self.get_compressed_data(f, speedup_data))
-                                    for i in range(0, len(speedup_data), 6):
-                                        speedup_list.append(speedup_data[i:i+6])
-                                    speedup_tiles = items.TileManager(data=speedup_list, _type=2)
+                            if version >= 3:
+                                # num of speedup data is right after tele data
+                                if len(item_data) > items.TileLayer.type_size+1: # some security
+                                    speedup_data = item_data[items.TileLayer.type_size+1]
+                                    if speedup_data > -1 and speedup_data < self.header.num_raw_data:
+                                        speedup_data = decompress(self.get_compressed_data(f, speedup_data))
+                                        if len(speedup_data) // 6 != width * height:
+                                            raise ValueError('Invalid speedup data')
+                                        for i in range(0, len(speedup_data), 6):
+                                            speedup_list.append(speedup_data[i:i+6])
+                                        speedup_tiles = items.TileManager(data=speedup_list, _type=2)
+                            else:
+                                # num of speedup data is right after tele data
+                                if len(item_data) > items.TileLayer.type_size-2: # some security
+                                    speedup_data = item_data[items.TileLayer.type_size-2]
+                                    if speedup_data > -1 and speedup_data < self.header.num_raw_data:
+                                        speedup_data = decompress(self.get_compressed_data(f, speedup_data))
+                                        if len(speedup_data) // 6 != width * height:
+                                            raise ValueError('Invalid speedup data')
+                                        for i in range(0, len(speedup_data), 6):
+                                            speedup_list.append(speedup_data[i:i+6])
+                                        speedup_tiles = items.TileManager(data=speedup_list, _type=2)
                         elif game == 16:
                             switch_list = []
                             if len(item_data) > type_size+3:
                                 switch_data = item_data[type_size+3]
                                 if switch_data > -1 and switch_data < self.header.num_raw_data:
                                     switch_data = decompress(self.get_compressed_data(f, switch_data))
+                                    if len(switch_data) // 4 != width * height:
+                                        raise ValueError('Invalid switch data')
                                     for i in range(0, len(switch_data), 4):
                                         switch_list.append(switch_data[i:i+4])
                                     switch_tiles = items.TileManager(data=switch_list, _type=3)
@@ -232,6 +265,8 @@ class DataFileReader(object):
                                 tune_data = item_data[type_size+4]
                                 if tune_data > -1 and tune_data < self.header.num_raw_data:
                                     tune_data = decompress(self.get_compressed_data(f, tune_data))
+                                    if len(tune_data) // 2 != width * height:
+                                        raise ValueError('Invalid tune data')
                                     for i in range(0, len(tune_data), 2):
                                         tune_list.append(tune_data[i:i+2])
                                     tune_tiles = items.TileManager(data=tune_list, _type=4)
@@ -306,7 +341,7 @@ class DataFileReader(object):
                                                  num_sources=num_sources)
                         layers.append(layer)
 
-                if group_name == "Game" and not has_gamelayer:
+                if is_game_group and not has_gamelayer:
                     raise ValueError('A Game layer is required')
 
                 group = items.Group(name=group_name, offset_x=offset_x,
