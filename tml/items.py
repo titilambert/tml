@@ -15,11 +15,14 @@ from struct import unpack, pack
 import warnings
 from zlib import decompress
 
-import png
+try:
+    import png
+except ImportError:
+    png = False
 
-from constants import ITEM_TYPES, TML_DIR, TILEFLAG_VFLIP, \
+from .constants import ITEM_TYPES, TML_DIR, TILEFLAG_VFLIP, \
      TILEFLAG_HFLIP, TILEFLAG_OPAQUE, TILEFLAG_ROTATE
-from utils import ints_to_string
+from .utils import ints_to_string
 
 #GAMELAYER_IMAGE = PIL.Image.open(os.path.join(TML_DIR,
 #	os.extsep.join(('entities', 'png'))))
@@ -68,7 +71,7 @@ class Image(object):
         else:
             png_path = path
 
-        if data is None:
+        if data is None and png:
             try:
                 png.Reader(png_path).asRGBA()
             except png.Error:
@@ -212,6 +215,10 @@ class Layer(object):
     @property
     def is_quadlayer(self):
         return self.type == 'quadlayer'
+
+    @property
+    def is_soundlayer(self):
+        return self.type == 'soundlayer'
 
     @property
     def is_gamelayer(self):

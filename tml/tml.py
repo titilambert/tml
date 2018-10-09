@@ -8,8 +8,8 @@
     :copyright: 2010-2013 by the TML Team, see AUTHORS for more details.
     :license: GNU GPL, see LICENSE for more details.
 """
-from constants import *
-from datafile import DataFileReader, DataFileWriter
+from .constants import *
+from .datafile import DataFileReader, DataFileWriter
 
 class MapError(BaseException):
     """Raised when your map is not a valid teeworlds map.

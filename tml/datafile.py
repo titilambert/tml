@@ -9,9 +9,9 @@
 from struct import pack, unpack
 from zlib import compress, decompress
 
-from constants import *
-import items
-from utils import ints_to_string, string_to_ints
+from .constants import *
+from . import items
+from .utils import ints_to_string, string_to_ints
 
 class Header(object):
     """Contains fileheader information.
@@ -26,7 +26,7 @@ class Header(object):
         self.version = 4
         self.size = 0
         if f != None:
-            sig = ''.join(unpack('4c', f.read(4)))
+            sig = b''.join(unpack('4c', f.read(4))).decode('ascii')
             if sig not in ('DATA', 'ATAD'):
                 raise TypeError('Invalid signature')
             self.version, self.size_, self.swaplen, self.num_item_types, \
@@ -77,7 +77,7 @@ class DataFileReader(object):
 
             # check version
             item_size, version_item = self.find_item(f, ITEM_VERSION, 0)
-            fmt = '{0}i'.format(item_size/4)
+            fmt = '{0}i'.format(item_size//4)
             version = unpack(fmt, version_item)[0] # we only expect 1 element here
             if version != 1:
                 raise ValueError('Wrong version')
@@ -87,7 +87,7 @@ class DataFileReader(object):
             item = self.find_item(f, ITEM_INFO, 0)
             if item is not None:
                 item_size, item_data = item
-                fmt = '{0}i'.format(item_size/4)
+                fmt = '{0}i'.format(item_size//4)
                 item_data = unpack(fmt, item_data)
                 version, author, map_version, credits, license, \
                 settings = item_data[:items.Info.type_size]
@@ -108,7 +108,7 @@ class DataFileReader(object):
                 else:
                     license = None
                 if settings > -1:
-                    settings = decompress(self.get_compressed_data(f, settings)).split('\x00')[:-1]
+                    settings = decompress(self.get_compressed_data(f, settings)).split(b'\x00')[:-1]
                 else:
                     settings = None
                 self.info = items.Info(author=author, map_version=map_version,
@@ -122,12 +122,12 @@ class DataFileReader(object):
             for i in range(num):
                 item = self.get_item(f, start+i)
                 item_size, item_data = item
-                fmt = '{0}i'.format(item_size/4)
+                fmt = '{0}i'.format(item_size//4)
                 item_data = unpack(fmt, item_data)
                 version, width, height, external, image_name, \
                 image_data = item_data[:items.Image.type_size]
                 external = bool(external)
-                name = decompress(self.get_compressed_data(f, image_name))[:-1]
+                name = decompress(self.get_compressed_data(f, image_name))[:-1].decode('cp1252')
                 data = decompress(self.get_compressed_data(f, image_data)) if not external else None
                 image = items.Image(external=external, name=name,
                                    data=data, width=width, height=height)
@@ -138,13 +138,13 @@ class DataFileReader(object):
             has_game_group = False
             for i in range(group_item_num):
                 item_size, item_data = self.get_item(f, group_item_start+i)
-                fmt = '{0}i'.format(item_size/4)
+                fmt = '{0}i'.format(item_size//4)
                 item_data = unpack(fmt, item_data)
                 version, offset_x, offset_y, parallax_x, parallax_y, \
                 start_layer, num_layers, use_clipping, clip_x, clip_y, \
                 clip_w, clip_h = item_data[:items.Group.type_size-3]
                 if version != 3:
-                    raise ValueError('Wrong version')
+                    raise ValueError('Old map format version')
                 data = item_data[items.Group.type_size-3:items.Group.type_size]
                 group_name = ints_to_string(data) or None
                 start_layer, num_layers = item_data[5:7]
@@ -166,7 +166,7 @@ class DataFileReader(object):
                 layers = []
                 for j in range(num_layers):
                     item_size, item_data = self.get_item(f, layer_item_start+start_layer+j)
-                    fmt = '{0}i'.format(item_size/4)
+                    fmt = '{0}i'.format(item_size//4)
                     item_data = unpack(fmt, item_data)
                     layer_version, type_, flags = item_data[:items.Layer.type_size]
                     detail = True if flags else False
@@ -188,7 +188,7 @@ class DataFileReader(object):
                             tile_data = decompress(self.get_compressed_data(f, item_data[type_size+2]))
                         else:
                             tile_data = decompress(self.get_compressed_data(f, data))
-                        for i in xrange(0, len(tile_data), 4):
+                        for i in range(0, len(tile_data), 4):
                             tile_list.append(tile_data[i:i+4])
 
                         tiles = items.TileManager(data=tile_list)
@@ -204,7 +204,7 @@ class DataFileReader(object):
                                 tele_data = item_data[type_size]
                                 if tele_data > -1 and tele_data < self.header.num_raw_data:
                                     tele_data = decompress(self.get_compressed_data(f, tele_data))
-                                    for i in xrange(0, len(tele_data), 2):
+                                    for i in range(0, len(tele_data), 2):
                                         tele_list.append(tele_data[i:i+2])
                                     tele_tiles = items.TileManager(data=tele_list, _type=1)
                         elif game == 4:
@@ -214,7 +214,7 @@ class DataFileReader(object):
                                 speedup_data = item_data[type_size+1]
                                 if speedup_data > -1 and speedup_data < self.header.num_raw_data:
                                     speedup_data = decompress(self.get_compressed_data(f, speedup_data))
-                                    for i in xrange(0, len(speedup_data), 6):
+                                    for i in range(0, len(speedup_data), 6):
                                         speedup_list.append(speedup_data[i:i+6])
                                     speedup_tiles = items.TileManager(data=speedup_list, _type=2)
                         elif game == 16:
@@ -223,7 +223,7 @@ class DataFileReader(object):
                                 switch_data = item_data[type_size+3]
                                 if switch_data > -1 and switch_data < self.header.num_raw_data:
                                     switch_data = decompress(self.get_compressed_data(f, switch_data))
-                                    for i in xrange(0, len(switch_data), 4):
+                                    for i in range(0, len(switch_data), 4):
                                         switch_list.append(switch_data[i:i+4])
                                     switch_tiles = items.TileManager(data=switch_list, _type=3)
                         elif game == 32:
@@ -232,7 +232,7 @@ class DataFileReader(object):
                                 tune_data = item_data[type_size+4]
                                 if tune_data > -1 and tune_data < self.header.num_raw_data:
                                     tune_data = decompress(self.get_compressed_data(f, tune_data))
-                                    for i in xrange(0, len(tune_data), 2):
+                                    for i in range(0, len(tune_data), 2):
                                         tune_list.append(tune_data[i:i+2])
                                     tune_tiles = items.TileManager(data=tune_list, _type=4)
 
@@ -290,7 +290,7 @@ class DataFileReader(object):
                             name = ints_to_string(item_data[type_size-3:type_size]) or None
                         quad_data = decompress(self.get_compressed_data(f, data))
                         quad_list = []
-                        for k in xrange(0, len(quad_data), 152):
+                        for k in range(0, len(quad_data), 152):
                             quad_list.append(quad_data[k:k+152])
                         quads = items.QuadManager(data=quad_list)
                         layer = items.QuadLayer(name=name, detail=detail,
@@ -322,10 +322,10 @@ class DataFileReader(object):
 
             # load envpoints
             item_size, item = self.find_item(f, ITEM_ENVPOINT, 0)
-            fmt = '{0}i'.format(item_size/4)
+            fmt = '{0}i'.format(item_size//4)
             item = unpack(fmt, item)
             type_size = items.Envpoint.type_size
-            for i in range(len(item)/6):
+            for i in range(len(item)//6):
                 point = list(item[(i*6):(i*6+6)])
                 time, curvetype = point[:type_size-4]
                 values = point[type_size-4:type_size]
@@ -338,7 +338,7 @@ class DataFileReader(object):
             type_size = items.Envelope.type_size
             for i in range(num):
                 item_size, item_data = self.get_item(f, start+i)
-                fmt = '{0}i'.format(item_size/4)
+                fmt = '{0}i'.format(item_size//4)
                 item_data = unpack(fmt, item_data)
                 version, channels, start_point, \
                 num_point = item_data[:type_size-9]
