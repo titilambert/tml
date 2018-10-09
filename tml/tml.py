@@ -92,6 +92,12 @@ class Teemap(object):
                 return layer
 
     @property
+    def gamegroup(self):
+        for group in self.groups:
+            if group.is_gamegroup:
+                return group
+
+    @property
     def width(self):
         return self.gamelayer.width
 
