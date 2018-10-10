@@ -127,7 +127,10 @@ class DataFileReader(object):
                 version, width, height, external, image_name, \
                 image_data = item_data[:items.Image.type_size]
                 external = bool(external)
-                name = decompress(self.get_compressed_data(f, image_name))[:-1].decode('cp1252')
+                try:
+                    name = decompress(self.get_compressed_data(f, image_name))[:-1].decode('utf-8')
+                except UnicodeDecodeError:
+                    name = decompress(self.get_compressed_data(f, image_name))[:-1].decode('cp1252')
                 data = decompress(self.get_compressed_data(f, image_data)) if not external else None
                 image = items.Image(external=external, name=name,
                                    data=data, width=width, height=height)
