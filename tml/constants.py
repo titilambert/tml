@@ -43,3 +43,5 @@ TILEINDEX  = {
     'ninja': 201,
     'rifle': 202,
 }
+
+R_TILEINDEX = dict([(v, k) for k, v in TILEINDEX.items()])
