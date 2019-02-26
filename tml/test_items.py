@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-from items import Layer, TileLayer, TileManager, Tile, QuadLayer, QuadManager, \
+from .items import Layer, TileLayer, TileManager, Tile, QuadLayer, QuadManager, \
      Quad
 
 class TestTileLayer(unittest.TestCase):
@@ -182,13 +182,13 @@ class TestQuadLayer(unittest.TestCase):
 class TestQuadManager(unittest.TestCase):
 
     def setUp(self):
-        self.manager = QuadManager([Quad() for i in xrange(10)])
+        self.manager = QuadManager([Quad() for i in range(10)])
 
     def test_init(self):
         manager = QuadManager()
         self.assertEqual(len(manager), 0)
 
-        quads = [Quad() for i in xrange(10)]
+        quads = [Quad() for i in range(10)]
         quad = Quad(pos_env=1, pos_env_offset=2, color_env=3,
                           color_env_offset=4)
         quads.append(quad)

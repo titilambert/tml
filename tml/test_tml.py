@@ -7,8 +7,8 @@ import shutil
 import unittest
 import warnings
 
-from tml import Teemap, MapError
-import items
+from .tml import Teemap, MapError
+from . import items
 
 class TestTeemap(unittest.TestCase):
 
@@ -83,7 +83,7 @@ class TestTeemap(unittest.TestCase):
             self.assertIs(envpoint, self.teemap.envpoints[i+4])
 
     def test_images(self):
-        images = [None, 'grass_main', 'grass_main', None, 'grass_main', 'test']
+        images = [None, b'grass_main', b'grass_main', None, b'grass_main', b'test']
         for i, layer in enumerate(self.teemap.layers):
             if images[i] is None:
                 self.assertIs(layer.image_id, -1)

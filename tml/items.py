@@ -17,9 +17,9 @@ from zlib import decompress
 
 import png
 
-from constants import ITEM_TYPES, TML_DIR, TILEFLAG_VFLIP, \
+from .constants import ITEM_TYPES, TML_DIR, TILEFLAG_VFLIP, \
      TILEFLAG_HFLIP, TILEFLAG_OPAQUE, TILEFLAG_ROTATE
-from utils import ints_to_string
+from .utils import ints_to_string
 
 #GAMELAYER_IMAGE = PIL.Image.open(os.path.join(TML_DIR,
 #	os.extsep.join(('entities', 'png'))))
@@ -61,7 +61,7 @@ class Image(object):
         self.height = height
         self.external = external
         if external is True:
-            png_path = os.sep.join([TML_DIR, 'mapres', self.name])
+            png_path = os.sep.join([TML_DIR, 'mapres', self.name.decode('utf-8')])
             png_path = os.extsep.join([png_path, 'png'])
         else:
             png_path = path
@@ -83,7 +83,7 @@ class Image(object):
         if os.path.splitext(dest)[1] != ''.join([os.extsep, 'png']):
             dest = os.extsep.join([dest, 'png'])
         if self.external:
-            src = os.sep.join([TML_DIR, 'mapres', self.name])
+            src = os.sep.join([TML_DIR, 'mapres', self.name.decode('utf-8')])
             src = os.extsep.join([src, 'png'])
             if not os.path.exists(src):
                 raise ValueError('External image "{0}" does not exist'.format(self.name))
@@ -564,9 +564,9 @@ class TileManager(object):
             self.tiles = data
         else:
             if _type == 1:
-                self.tiles = ['\x00\x00'] * size
+                self.tiles = [b'\x00\x00'] * size
             else:
-                self.tiles = ['\x00\x00\x00\x00'] * size
+                self.tiles = [b'\x00\x00\x00\x00'] * size
 
     def __getitem__(self, value):
         if isinstance(value, slice):
@@ -581,7 +581,7 @@ class TileManager(object):
         if isinstance(v, str):
             if len(v) != 4:
                 raise ValueError('The string must be exactly 4 chars long.')
-            self.tiles[k] = v
+            self.tiles[k] = v.encode()
         else:
             self.tiles[k] = self._tile_to_string(v)
 
@@ -595,8 +595,8 @@ class TileManager(object):
             return pack('Bh', tile.force, tile.angle)
         return pack('4B', tile.index, tile._flags, tile.skip, tile.reserved)
 
-    def _string_to_tile(self, string):
-        index, flags, skip, reserved = unpack('4B', string)
+    def _string_to_tile(self, string_):
+        index, flags, skip, reserved = unpack('4B', string_)
         return Tile(index=index, flags=flags, skip=skip, reserved=reserved)
 
     def __repr__(self):
@@ -653,7 +653,7 @@ class Tile(object):
         :returns: (x, y)
 
         """
-        return (self.index % 16, self.index / 16)
+        return (self.index % 16, self.index // 16)
 
     @property
     def flags(self):

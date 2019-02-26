@@ -9,9 +9,9 @@
 import os
 
 ITEM_VERSION, ITEM_INFO, ITEM_IMAGE, ITEM_ENVELOPE, ITEM_GROUP, ITEM_LAYER, \
-    ITEM_ENVPOINT = range(7)
+    ITEM_ENVPOINT = list(range(7))
 
-LAYERTYPE_INVALID, LAYERTYPE_GAME, LAYERTYPE_TILES, LAYERTYPE_QUADS = range(4)
+LAYERTYPE_INVALID, LAYERTYPE_GAME, LAYERTYPE_TILES, LAYERTYPE_QUADS = list(range(4))
 
 # TODO: do we need this?
 ITEM_TYPES = ('version', 'info', 'image', 'envelope', 'group', 'layer',

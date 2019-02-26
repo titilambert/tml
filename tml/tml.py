@@ -8,8 +8,8 @@
     :copyright: 2010-2012 by the TML Team, see AUTHORS for more details.
     :license: GNU GPL, see LICENSE for more details.
 """
-from constants import *
-from datafile import DataFileReader, DataFileWriter
+from .constants import *
+from .datafile import DataFileReader, DataFileWriter
 
 class MapError(BaseException):
     """Raised when your map is not a valid teeworlds map.
@@ -30,7 +30,7 @@ class Teemap(object):
     """
 
     def __init__(self, map_path=None):
-        self.name = ''
+        self.name = b''
 
         if map_path:
             self._load(map_path)
